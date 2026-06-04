@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#0a1931" />
+  <title>Certificate Verification | Lakshmi Group of Education Society</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+  <style>
+    :root{
+      --navy:#0a1931;
+      --gold:#ffc107;
+      --maroon:#800000;
+      --green:#198754;
+      --slate:#475569;
+      --ink:#102033;
+      --paper:#f3f4f6;
+    }
+
+    *{box-sizing:border-box}
+    html,body{min-height:100%;overscroll-behavior:none}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:geometricPrecision;
+      color:var(--ink);
+      background:linear-gradient(145deg,#0a1931 0%,#10294f 52%,#06101f 100%);
+      touch-action:manipulation;
+      transition:background-color 1s ease;
+    }
+    body.verify-route{background:#fff}
+    body.verify-route.verify-bg-ready{background:var(--paper)}
+
+    .gateway-view,
+    .verify-view{min-height:100vh}
+    .view-hidden{display:none!important}
+    .glass-card{
+      background:rgba(255,255,255,.1);
+      border:1px solid rgba(255,255,255,.15);
+      box-shadow:0 30px 90px rgba(0,0,0,.35);
+      backdrop-filter:blur(24px);
+      -webkit-backdrop-filter:blur(24px);
+    }
+    .qr-box canvas,
+    .qr-box img{
+      display:block;
+      width:100%!important;
+      height:100%!important;
+      image-rendering:crisp-edges;
+    }
+    .gold-button{
+      background:linear-gradient(135deg,var(--gold),#ffe08a);
+      color:var(--navy);
+      box-shadow:0 18px 38px rgba(255,193,7,.25);
+    }
+    .navy-button{
+      background:linear-gradient(135deg,var(--navy),#142f59);
+      color:#fff;
+      box-shadow:0 18px 34px rgba(10,25,49,.22);
+    }
+
+    .success-svg{width:104px;height:104px}
+    .success-circle{
+      stroke:rgba(25,135,84,.18);
+      stroke-width:7;
+      fill:#fff;
+    }
+    .success-check{
+      stroke:var(--green);
+      stroke-width:8;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+      fill:none;
+      stroke-dasharray:74;
+      stroke-dashoffset:74;
+    }
+    .run-check .success-check{animation:drawCheck .78s cubic-bezier(.2,.7,.2,1) forwards}
+    .verified-pill{
+      box-shadow:0 0 0 0 rgba(25,135,84,.42);
+      animation:verifiedGlow 1.9s ease-in-out infinite;
+    }
+    .details-card{
+      opacity:0;
+      transform:translateY(48px);
+      box-shadow:0 32px 90px rgba(15,23,42,.16);
+    }
+    .details-card.card-in{
+      animation:slideUp .78s cubic-bezier(.2,.8,.2,1) forwards;
+    }
+    .fade-seq{opacity:0;transform:translateY(10px)}
+    .fade-seq.seq-in{animation:fadeIn .5s ease forwards}
+
+    .modal-open{overflow:hidden}
+    .cert-modal{
+      background:rgba(0,0,0,.88);
+      touch-action:none;
+    }
+    .cert-stage{
+      height:100%;
+      width:100%;
+      overflow:hidden;
+      touch-action:none;
+      cursor:zoom-in;
+    }
+    .cert-image{
+      max-width:min(94vw,980px);
+      max-height:82vh;
+      user-select:none;
+      -webkit-user-drag:none;
+      transform-origin:center center;
+      transition:transform .18s ease;
+      will-change:transform;
+    }
+    .cert-image.zoomed{cursor:zoom-out}
+
+    @keyframes drawCheck{
+      to{stroke-dashoffset:0}
+    }
+    @keyframes verifiedGlow{
+      0%,100%{box-shadow:0 0 0 0 rgba(25,135,84,.32),0 0 28px rgba(25,135,84,.22)}
+      50%{box-shadow:0 0 0 8px rgba(25,135,84,0),0 0 34px rgba(25,135,84,.38)}
+    }
+    @keyframes slideUp{
+      to{opacity:1;transform:translateY(0)}
+    }
+    @keyframes fadeIn{
+      to{opacity:1;transform:translateY(0)}
+    }
+  </style>
+</head>
+<body>
+  <main id="gatewayView" class="gateway-view flex items-center justify-center px-4 py-8">
+    <section class="glass-card w-full max-w-md rounded-[28px] px-5 py-7 text-center sm:px-8 sm:py-9">
+      <img
+        src="logo1.png"
+        alt="Lakshmi Group of Education Society logo"
+        class="mx-auto h-24 w-24 rounded-full border-4 border-[var(--gold)] bg-white object-contain p-1 shadow-xl sm:h-28 sm:w-28"
+        onerror="this.onerror=null;this.src='https://dummyimage.com/240x240/0a1931/ffc107.png&text=LGES';" />
+
+      <h1 class="mt-5 text-lg font-extrabold tracking-wide text-[var(--gold)] sm:text-xl">
+        LAKSHMI GROUP OF EDUCATION SOCIETY
+      </h1>
+      <p class="mt-1 text-xs font-semibold text-white/70">Regd No: 30502112143Q</p>
+
+      <div class="mx-auto mt-7 w-full max-w-[248px] rounded-3xl bg-white p-4 shadow-2xl">
+        <div id="qrcode" class="qr-box mx-auto h-[216px] w-[216px]"></div>
+        <p id="qrFallback" class="hidden text-sm font-semibold text-[var(--navy)]">Open verification link</p>
+      </div>
+
+      <p class="mt-6 text-base font-semibold text-white">Scan to Verify Certificate</p>
+      <div class="mx-auto mt-3 inline-flex rounded-full bg-black/35 px-4 py-2 text-xs font-bold tracking-wide text-white ring-1 ring-white/15">
+        ID: LGES/INT/2026/0001
+      </div>
+
+      <button id="verifyNowBtn" class="gold-button mt-7 min-h-12 w-full rounded-2xl px-5 py-3 text-sm font-extrabold transition hover:-translate-y-0.5 active:translate-y-0">
+        Verify Now
+      </button>
+    </section>
+  </main>
+
+  <main id="verifyView" class="verify-view view-hidden px-4 py-8 sm:px-6 lg:px-8">
+    <section class="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl flex-col items-center justify-center">
+      <div id="successBlock" class="fade-seq text-center">
+        <svg id="successSvg" class="success-svg mx-auto" viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="success-circle" cx="60" cy="60" r="48"></circle>
+          <path class="success-check" d="M36 62 L52 78 L84 42"></path>
+        </svg>
+        <div id="verifiedPill" class="verified-pill fade-seq mt-4 inline-flex rounded-full bg-[var(--green)] px-5 py-2 text-sm font-black tracking-wider text-white">
+          &#10003; VERIFIED
+        </div>
+      </div>
+
+      <img
+        id="verifyLogo"
+        src="logo_jaipur.png"
+        alt="Lakshmi Group of Education Society logo"
+        class="fade-seq mt-7 h-24 w-24 rounded-full border-4 border-white bg-white object-contain p-1 shadow-xl sm:h-28 sm:w-28"
+        onerror="this.onerror=null;this.src='https://dummyimage.com/240x240/0a1931/ffc107.png&text=LGES';" />
+
+      <article id="detailsCard" class="details-card mt-7 w-full rounded-[28px] bg-white p-5 sm:p-8 lg:p-10">
+        <div class="text-center">
+          <p class="text-xs font-black uppercase tracking-[.22em] text-[var(--maroon)]">Official Certificate Record</p>
+          <h2 class="mt-2 text-2xl font-black text-[var(--navy)] sm:text-3xl">Digital Verification Transcript</h2>
+        </div>
+
+        <dl class="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div class="rounded-2xl bg-slate-50 p-4"><dt class="text-xs font-bold uppercase tracking-wide text-slate-500">Certificate Type</dt><dd class="mt-2 text-base font-extrabold text-[var(--navy)]">Internship Completion Certificate</dd></div>
+          <div class="rounded-2xl bg-slate-50 p-4"><dt class="text-xs font-bold uppercase tracking-wide text-slate-500">Issued To</dt><dd class="mt-2 text-base font-extrabold text-[var(--navy)]">Tannu Shekhawat</dd></div>
+          <div class="rounded-2xl bg-slate-50 p-4"><dt class="text-xs font-bold uppercase tracking-wide text-slate-500">Programme</dt><dd class="mt-2 text-base font-extrabold text-[var(--navy)]">Web Development</dd></div>
+          <div class="rounded-2xl bg-slate-50 p-4"><dt class="text-xs font-bold uppercase tracking-wide text-slate-500">Internship Duration</dt><dd class="mt-2 text-base font-extrabold text-[var(--navy)]">120 Hours</dd></div>
+          <div class="rounded-2xl bg-slate-50 p-4"><dt class="text-xs font-bold uppercase tracking-wide text-slate-500">Date of Programme</dt><dd class="mt-2 text-base font-extrabold text-[var(--navy)]">01 April, 2026 to 21 April, 2026</dd></div>
+          <div class="rounded-2xl bg-slate-50 p-4"><dt class="text-xs font-bold uppercase tracking-wide text-slate-500">Date of Issue</dt><dd class="mt-2 text-base font-extrabold text-[var(--navy)]">03-06-2026</dd></div>
+          <div class="rounded-2xl bg-slate-50 p-4"><dt class="text-xs font-bold uppercase tracking-wide text-slate-500">Place of Issue</dt><dd class="mt-2 text-base font-extrabold text-[var(--navy)]">LGES Computer Classes, Kanta, Jaipur</dd></div>
+          <div class="rounded-2xl bg-slate-50 p-4"><dt class="text-xs font-bold uppercase tracking-wide text-slate-500">Certificate No</dt><dd class="mt-2 text-base font-extrabold text-[var(--navy)]">LGES/INT/2026/0001</dd></div>
+          <div class="rounded-2xl bg-slate-50 p-4"><dt class="text-xs font-bold uppercase tracking-wide text-slate-500">Regd. No.</dt><dd class="mt-2 text-base font-extrabold text-[var(--navy)]">30502112143Q</dd></div>
+        </dl>
+
+        <div class="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <a href="tel:9352621943" class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-extrabold text-[var(--navy)] shadow-sm transition hover:-translate-y-0.5">Phone</a>
+          <a href="mailto:lgescomputerclasses@gmail.com" class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-extrabold text-[var(--navy)] shadow-sm transition hover:-translate-y-0.5">Email</a>
+          <a href="https://lges-computer-classes.netlify.app/" target="_blank" rel="noopener noreferrer" class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-extrabold text-[var(--navy)] shadow-sm transition hover:-translate-y-0.5">Web Link</a>
+        </div>
+
+        <button id="openModalBtn" class="navy-button mt-8 min-h-12 w-full rounded-2xl px-5 py-3 text-sm font-extrabold transition hover:-translate-y-0.5">
+          View Original Certificate Document
+        </button>
+      </article>
+
+      <footer class="mt-8 max-w-2xl text-center text-xs font-semibold leading-6 text-slate-500">
+        &copy; This certificate is digitally verified by Lakshmi Group of Education Society. All rights reserved.
+      </footer>
+    </section>
+  </main>
+
+  <div id="certificateModal" class="cert-modal fixed inset-0 z-50 hidden">
+    <button id="closeModalBtn" class="absolute right-4 top-4 z-20 flex h-12 w-12 items-center justify-center rounded-full bg-white text-2xl font-black text-black shadow-xl" aria-label="Close document preview">
+      &#10005;
+    </button>
+    <a
+      href="certificate.png"
+      download="LGES-INT-2026-0001-Certificate.png"
+      class="gold-button absolute bottom-5 left-1/2 z-20 -translate-x-1/2 rounded-full px-5 py-3 text-sm font-black">
+      Download Certificate
+    </a>
+    <div id="certStage" class="cert-stage flex items-center justify-center px-3 py-20">
+      <img
+        id="certificateImage"
+        src="certificate.png"
+        alt="Original certificate document"
+        class="cert-image rounded-xl bg-white shadow-2xl"
+        onerror="this.onerror=null;this.src='https://dummyimage.com/1200x850/ffffff/0a1931.png&text=Certificate+Preview';" />
+    </div>
+  </div>
+
+  <script>
+    const gatewayView=document.getElementById('gatewayView');
+    const verifyView=document.getElementById('verifyView');
+    const verifyNowBtn=document.getElementById('verifyNowBtn');
+    const successBlock=document.getElementById('successBlock');
+    const successSvg=document.getElementById('successSvg');
+    const verifiedPill=document.getElementById('verifiedPill');
+    const verifyLogo=document.getElementById('verifyLogo');
+    const detailsCard=document.getElementById('detailsCard');
+    const modal=document.getElementById('certificateModal');
+    const openModalBtn=document.getElementById('openModalBtn');
+    const closeModalBtn=document.getElementById('closeModalBtn');
+    const certStage=document.getElementById('certStage');
+    const certImage=document.getElementById('certificateImage');
+
+    let qrReady=false;
+    let scale=1;
+    let translateX=0;
+    let translateY=0;
+    let startDistance=0;
+    let startScale=1;
+    let lastX=0;
+    let lastY=0;
+    let isDragging=false;
+
+    function verificationUrl(){
+      return window.location.origin + window.location.pathname + '#verify';
+    }
+
+    function buildQr(){
+      if(qrReady || typeof QRCode==='undefined') return;
+      const box=document.getElementById('qrcode');
+      box.innerHTML='';
+      new QRCode(box,{
+        text:verificationUrl(),
+        width:216,
+        height:216,
+        colorDark:'#0a1931',
+        colorLight:'#ffffff',
+        correctLevel:QRCode.CorrectLevel.H
+      });
+      qrReady=true;
+    }
+
+    function resetVerificationAnimation(){
+      document.body.classList.remove('verify-bg-ready');
+      successBlock.classList.remove('seq-in');
+      successSvg.classList.remove('run-check');
+      verifiedPill.classList.remove('seq-in');
+      verifyLogo.classList.remove('seq-in');
+      detailsCard.classList.remove('card-in');
+    }
+
+    function runVerificationAnimation(){
+      resetVerificationAnimation();
+      requestAnimationFrame(()=>{
+        document.body.classList.add('verify-bg-ready');
+        setTimeout(()=>successBlock.classList.add('seq-in'),160);
+        setTimeout(()=>successSvg.classList.add('run-check'),360);
+        setTimeout(()=>verifiedPill.classList.add('seq-in'),760);
+        setTimeout(()=>verifyLogo.classList.add('seq-in'),980);
+        setTimeout(()=>detailsCard.classList.add('card-in'),1120);
+      });
+    }
+
+    function route(){
+      const isVerify=window.location.hash === '#verify';
+      gatewayView.classList.toggle('view-hidden',isVerify);
+      verifyView.classList.toggle('view-hidden',!isVerify);
+      document.body.classList.toggle('verify-route',isVerify);
+      if(isVerify){
+        runVerificationAnimation();
+      }else{
+        document.body.classList.remove('verify-bg-ready','modal-open');
+        resetVerificationAnimation();
+        closeModal();
+        setTimeout(buildQr,0);
+      }
+    }
+
+    function applyTransform(){
+      certImage.style.transform=`translate3d(${translateX}px,${translateY}px,0) scale(${scale})`;
+      certImage.classList.toggle('zoomed',scale>1);
+    }
+
+    function resetZoom(){
+      scale=1;
+      translateX=0;
+      translateY=0;
+      applyTransform();
+    }
+
+    function openModal(){
+      modal.classList.remove('hidden');
+      document.body.classList.add('modal-open');
+      resetZoom();
+    }
+
+    function closeModal(){
+      modal.classList.add('hidden');
+      document.body.classList.remove('modal-open');
+      resetZoom();
+    }
+
+    function distance(touches){
+      const dx=touches[0].clientX-touches[1].clientX;
+      const dy=touches[0].clientY-touches[1].clientY;
+      return Math.hypot(dx,dy);
+    }
+
+    verifyNowBtn.addEventListener('click',()=>{window.location.hash='verify'});
+    window.addEventListener('hashchange',route);
+    route();
+    window.addEventListener('load',()=>{
+      buildQr();
+      setTimeout(()=>{
+        if(!qrReady){
+          document.getElementById('qrFallback').classList.remove('hidden');
+        }
+      },1200);
+    });
+
+    openModalBtn.addEventListener('click',openModal);
+    closeModalBtn.addEventListener('click',closeModal);
+    modal.addEventListener('click',event=>{
+      if(event.target===modal) closeModal();
+    });
+    document.addEventListener('keydown',event=>{
+      if(event.key==='Escape') closeModal();
+    });
+
+    certStage.addEventListener('click',event=>{
+      if(event.detail !== 1 || isDragging) return;
+      scale=scale>1 ? 1 : 1.75;
+      translateX=0;
+      translateY=0;
+      applyTransform();
+    });
+
+    certStage.addEventListener('touchstart',event=>{
+      if(event.touches.length===2){
+        event.preventDefault();
+        startDistance=distance(event.touches);
+        startScale=scale;
+      }else if(event.touches.length===1){
+        isDragging=true;
+        lastX=event.touches[0].clientX;
+        lastY=event.touches[0].clientY;
+      }
+    },{passive:false});
+
+    certStage.addEventListener('touchmove',event=>{
+      if(event.touches.length===2){
+        event.preventDefault();
+        const nextScale=Math.min(Math.max(startScale*(distance(event.touches)/startDistance),1),4);
+        scale=nextScale;
+        applyTransform();
+      }else if(event.touches.length===1 && scale>1){
+        event.preventDefault();
+        const currentX=event.touches[0].clientX;
+        const currentY=event.touches[0].clientY;
+        translateX+=currentX-lastX;
+        translateY+=currentY-lastY;
+        lastX=currentX;
+        lastY=currentY;
+        applyTransform();
+      }
+    },{passive:false});
+
+    certStage.addEventListener('touchend',()=>{
+      isDragging=false;
+      if(scale<1.05) resetZoom();
+    });
+  </script>
+</body>
+</html>
